@@ -35,6 +35,8 @@ class TodoListViewController: UITableViewController {
         
         print("Creating cell.")
         
+        //TODO: Remove the test code
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         
         cell.textLabel?.text = itemArray[indexPath.row]
@@ -43,7 +45,25 @@ class TodoListViewController: UITableViewController {
         
     }
     
+    
+    
+    
     // Delegate methods
+    
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        // Add in or remove the little tick icon in the cell
+        if tableView.cellForRow(at: indexPath)?.accessoryType != .checkmark {
+            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+        } else {
+            tableView.cellForRow(at: indexPath)?.accessoryType = .none
+        }
+        
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+    }
 
 }
 
