@@ -10,11 +10,20 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    var itemArray = ["Find Mawi", "Cross Ocean", "Restore Heart"]
+    let defaults = UserDefaults.standard // This is how we will store the data in the todo list
+    
+    var itemArray = ["Find Maoui", "Cross Ocean", "Restore Heart"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        
+        // If we have saved data in the past, get it now.
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
+        
     }
 
     override func didReceiveMemoryWarning() {
@@ -91,6 +100,9 @@ class TodoListViewController: UITableViewController {
                 print("The item is called: \(textEntered)")
                 
                 self.itemArray.append(textEntered) // Add the item to the array of items
+                
+                // Save the new array to the defaults
+                self.defaults.set(self.itemArray, forKey: "TodoListArray")
                 
                 // Update the table view
                 self.tableView.reloadData()
