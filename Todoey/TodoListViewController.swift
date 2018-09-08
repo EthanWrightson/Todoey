@@ -12,16 +12,22 @@ class TodoListViewController: UITableViewController {
     
     let defaults = UserDefaults.standard // This is how we will store the data in the todo list
     
-    var itemArray = ["Find Maoui", "Cross Ocean", "Restore Heart"]
+    var itemArray = [Item]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        print("viewDidLoad")
         
         // If we have saved data in the past, get it now.
-        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+        if let itemData = defaults.data(forKey: "TodoListArray"), let items = try? JSONDecoder().decode([Item].self, from: itemData) {
+            
             itemArray = items
+            
+            print("Gathered existing items from UserDefaults")
+        } else {
+            print("There seems to be nothing in the UserDefaults.")
         }
         
     }
@@ -29,6 +35,7 @@ class TodoListViewController: UITableViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+        print("didRecieveMemoryWarning")
     }
     
     ///////////////////////////////////////////////////////////////////
@@ -44,17 +51,17 @@ class TodoListViewController: UITableViewController {
         
         print("Creating cell.")
         
-        //TODO: Remove the test code
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
         
-        cell.textLabel?.text = itemArray[indexPath.row]
+        cell.textLabel?.text = itemArray[indexPath.row].title
+        
+        // Add in the little checkmark if necessary
+        cell.accessoryType = itemArray[indexPath.row].isCompleted ? .checkmark : .none
         
         return cell
         
     }
-    
-    
     
     
     //MARK: Delegate methods
@@ -62,15 +69,17 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        // Add in or remove the little tick icon in the cell
-        if tableView.cellForRow(at: indexPath)?.accessoryType != .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        }
+        print("Did select row")
         
+        
+        itemArray[indexPath.row].isCompleted = !(itemArray[indexPath.row].isCompleted)
+        
+        // Save in the userDefaults the new value of 'isCompleted'
+        saveToUserDefaults(itemArray: itemArray)
         
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        tableView.reloadData()
         
     }
     
@@ -81,6 +90,8 @@ class TodoListViewController: UITableViewController {
     
     
     @IBAction func addButtonPressed(_ sender: Any) {
+        
+        print("Add Button Pressed")
         
         var textField : UITextField = UITextField() // This will be the text field inside the pop-up for new items.
         
@@ -99,10 +110,14 @@ class TodoListViewController: UITableViewController {
                 print("User has clicked \'Add Item\'. Inside completion handler")
                 print("The item is called: \(textEntered)")
                 
-                self.itemArray.append(textEntered) // Add the item to the array of items
+                // Create the new item
+                let newItem = Item()
+                newItem.title = textEntered
+                
+                self.itemArray.append(newItem) // Add the item to the array of items
                 
                 // Save the new array to the defaults
-                self.defaults.set(self.itemArray, forKey: "TodoListArray")
+                self.saveToUserDefaults(itemArray: self.itemArray)
                 
                 // Update the table view
                 self.tableView.reloadData()
@@ -125,11 +140,25 @@ class TodoListViewController: UITableViewController {
         }
         
         
-        
         present(alert, animated: true, completion: nil) // Show the alert
         
     }
     
+    
+    
+    
+    /////////////////////////////////////////////////////////////////
+    //MARK: - UserDefaults handling
 
+    func saveToUserDefaults(itemArray : [Item]) {
+        
+        if let encoded = try? JSONEncoder().encode(itemArray) {
+            
+            defaults.set(encoded, forKey: "TodoListArray")
+            
+        }
+        
+    }
+    
 }
 
