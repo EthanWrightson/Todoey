@@ -10,25 +10,28 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    let defaults = UserDefaults.standard // This is how we will store the data in the todo list
+    
+    
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist")
     
     var itemArray = [Item]()
+    
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        // Create a filepath that will be used to store data
+        let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist")
+        
+        print("\nDataFilePath: \(dataFilePath!)\n")
+        
         print("viewDidLoad")
         
         // If we have saved data in the past, get it now.
-        if let itemData = defaults.data(forKey: "TodoListArray"), let items = try? JSONDecoder().decode([Item].self, from: itemData) {
-            
-            itemArray = items
-            
-            print("Gathered existing items from UserDefaults")
-        } else {
-            print("There seems to be nothing in the UserDefaults.")
-        }
+        loadItemsFromCoreData()
+       
         
     }
 
@@ -74,8 +77,7 @@ class TodoListViewController: UITableViewController {
         
         itemArray[indexPath.row].isCompleted = !(itemArray[indexPath.row].isCompleted)
         
-        // Save in the userDefaults the new value of 'isCompleted'
-        saveToUserDefaults(itemArray: itemArray)
+        saveToCoreData(itemArray: itemArray)
         
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -86,7 +88,7 @@ class TodoListViewController: UITableViewController {
     
     
     ///////////////////////////////////////////////////
-    //MARK: Functionality
+    //MARK: - Functionality
     
     
     @IBAction func addButtonPressed(_ sender: Any) {
@@ -116,8 +118,7 @@ class TodoListViewController: UITableViewController {
                 
                 self.itemArray.append(newItem) // Add the item to the array of items
                 
-                // Save the new array to the defaults
-                self.saveToUserDefaults(itemArray: self.itemArray)
+                self.saveToCoreData(itemArray: self.itemArray)
                 
                 // Update the table view
                 self.tableView.reloadData()
@@ -148,13 +149,34 @@ class TodoListViewController: UITableViewController {
     
     
     /////////////////////////////////////////////////////////////////
-    //MARK: - UserDefaults handling
-
-    func saveToUserDefaults(itemArray : [Item]) {
+    //MARK: - Data Persistance
+    
+    func saveToCoreData(itemArray: [Item]) {
         
-        if let encoded = try? JSONEncoder().encode(itemArray) {
+        let encoder = PropertyListEncoder()
+        
+        do {
             
-            defaults.set(encoded, forKey: "TodoListArray")
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+            
+        } catch {
+            print("There was an error encoding the item array inside addButtonPressed, \(error)")
+        }
+        
+    }
+    
+    func loadItemsFromCoreData() {
+        
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            
+            let decoder = PropertyListDecoder()
+            
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            } catch {
+                print("Error decoding items from CoreData: \(error)")
+            }
             
         }
         
