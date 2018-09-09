@@ -30,7 +30,7 @@ class TodoListViewController: UITableViewController {
         print("viewDidLoad")
         
         // If we have saved data in the past, get it now.
-        loadItemsFromCoreData()
+        loadItems()
        
         
     }
@@ -77,7 +77,7 @@ class TodoListViewController: UITableViewController {
         
         itemArray[indexPath.row].isCompleted = !(itemArray[indexPath.row].isCompleted)
         
-        saveToCoreData(itemArray: itemArray)
+        saveItems(itemArray: itemArray)
         
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -118,7 +118,7 @@ class TodoListViewController: UITableViewController {
                 
                 self.itemArray.append(newItem) // Add the item to the array of items
                 
-                self.saveToCoreData(itemArray: self.itemArray)
+                self.saveItems(itemArray: self.itemArray)
                 
                 // Update the table view
                 self.tableView.reloadData()
@@ -151,7 +151,7 @@ class TodoListViewController: UITableViewController {
     /////////////////////////////////////////////////////////////////
     //MARK: - Data Persistance
     
-    func saveToCoreData(itemArray: [Item]) {
+    func saveItems(itemArray: [Item]) {
         
         let encoder = PropertyListEncoder()
         
@@ -166,7 +166,7 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    func loadItemsFromCoreData() {
+    func loadItems() {
         
         if let data = try? Data(contentsOf: dataFilePath!) {
             
@@ -175,7 +175,7 @@ class TodoListViewController: UITableViewController {
             do {
                 itemArray = try decoder.decode([Item].self, from: data)
             } catch {
-                print("Error decoding items from CoreData: \(error)")
+                print("Error decoding items from plist: \(error)")
             }
             
         }
