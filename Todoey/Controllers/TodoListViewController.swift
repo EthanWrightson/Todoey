@@ -25,7 +25,6 @@ class TodoListViewController: UITableViewController {
         
         print("viewDidLoad")
         
-        print("\nDataFilePath: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist"))\n")
         
         searchBar.delegate = self
         
