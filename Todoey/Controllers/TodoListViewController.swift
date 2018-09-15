@@ -11,6 +11,8 @@ import CoreData
 
 class TodoListViewController: UITableViewController {
     
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     var itemArray = [Item]()
@@ -21,22 +23,25 @@ class TodoListViewController: UITableViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        print("viewDidLoad")
         
         print("\nDataFilePath: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist"))\n")
         
-        print("viewDidLoad")
+        searchBar.delegate = self
         
         // If we have saved data in the past, get it now.
         loadItems()
        
-        
     }
 
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
         print("didRecieveMemoryWarning")
     }
+    
+    
     
     ///////////////////////////////////////////////////////////////////
     //MARK: - TableView methods
@@ -82,10 +87,9 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    
-    
+
     ///////////////////////////////////////////////////
-    //MARK: - Functionality
+    //MARK: - Add Item Functionality
     
     
     @IBAction func addButtonPressed(_ sender: Any) {
@@ -163,16 +167,59 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    func loadItems() {
+    func loadItems(withThisRequest request: NSFetchRequest<Item> = Item.fetchRequest()) { // The default value for the request just gets everything
 
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error fetching data from context: \(error)")
         }
+        
+        tableView.reloadData()
 
     }
     
 }
 
+//////////////////////////////////////////////////////////////////////////////////////
+//MARK: - Search Bar Functionality
+extension TodoListViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        print("SearchButtonClicked method")
+        
+        //MARK: Query the data from the database
+        
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        print(searchBar.text!)
+        
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // Predicate = the 'premise' for the search
+        
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending : true)] // SortDescriptor = how to sort the results of the search
+        
+        // Carry out the request
+        loadItems(withThisRequest: request)
+        
+    }
+    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        // If the user clicks the 'x' and the search bar becomes empty, go back to showing everything
+        if searchBar.text?.count == 0 {
+            
+            loadItems()
+            
+            
+            // Deselect the searchBar
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            
+        }
+        
+    }
+    
+}
