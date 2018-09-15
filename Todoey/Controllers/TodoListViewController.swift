@@ -7,12 +7,11 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
-    
-    
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     var itemArray = [Item]()
     
@@ -22,10 +21,8 @@ class TodoListViewController: UITableViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        // Create a filepath that will be used to store data
-        let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist")
         
-        print("\nDataFilePath: \(dataFilePath!)\n")
+        print("\nDataFilePath: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("TodoListItems.plist"))\n")
         
         print("viewDidLoad")
         
@@ -77,7 +74,7 @@ class TodoListViewController: UITableViewController {
         
         itemArray[indexPath.row].isCompleted = !(itemArray[indexPath.row].isCompleted)
         
-        saveItems(itemArray: itemArray)
+        saveItems()
         
         tableView.deselectRow(at: indexPath, animated: true)
         
@@ -112,13 +109,16 @@ class TodoListViewController: UITableViewController {
                 print("User has clicked \'Add Item\'. Inside completion handler")
                 print("The item is called: \(textEntered)")
                 
+                
+                
                 // Create the new item
-                let newItem = Item()
+                let newItem = Item(context: self.context)
                 newItem.title = textEntered
+                newItem.isCompleted = false
                 
                 self.itemArray.append(newItem) // Add the item to the array of items
                 
-                self.saveItems(itemArray: self.itemArray)
+                self.saveItems()
                 
                 // Update the table view
                 self.tableView.reloadData()
@@ -149,37 +149,29 @@ class TodoListViewController: UITableViewController {
     
     
     /////////////////////////////////////////////////////////////////
-    //MARK: - Data Persistance
+    //MARK: - Data Persistence
     
-    func saveItems(itemArray: [Item]) {
+    func saveItems() {
         
-        let encoder = PropertyListEncoder()
+        print("saveItems function")
         
         do {
-            
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
-            
+            try context.save()
         } catch {
-            print("There was an error encoding the item array inside addButtonPressed, \(error)")
+            print("Error saving context: \(error)")
         }
         
     }
     
     func loadItems() {
-        
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            
-            let decoder = PropertyListDecoder()
-            
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding items from plist: \(error)")
-            }
-            
+
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
         }
-        
+
     }
     
 }
