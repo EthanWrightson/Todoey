@@ -171,8 +171,21 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    func loadItems(withThisRequest request: NSFetchRequest<Item> = Item.fetchRequest()) { // The default value for the request just gets everything
-
+    func loadItems(withThisPredicate searchPredicate : NSPredicate? = nil) { // The default value for the request just gets everything
+        
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.title MATCHES %@", selectedCategory!.title!)
+        
+        // If the user has specified a predicate (with the search bar) add this in to the request
+        if let searchPredicate = searchPredicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, searchPredicate])
+            request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+        // Carry out the request
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -193,18 +206,13 @@ extension TodoListViewController: UISearchBarDelegate {
         
         print("SearchButtonClicked method")
         
-        //MARK: Query the data from the database
-        
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        //Query the data from the database
         
         print(searchBar.text!)
         
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // Predicate = the 'premise' for the search
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) // Predicate = the 'premise' for the search
         
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending : true)] // SortDescriptor = how to sort the results of the search
-        
-        // Carry out the request
-        loadItems(withThisRequest: request)
+        loadItems(withThisPredicate: predicate)
         
     }
     
