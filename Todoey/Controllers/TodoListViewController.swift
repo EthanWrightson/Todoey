@@ -17,6 +17,11 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    var selectedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
     
 
     override func viewDidLoad() {
@@ -28,8 +33,7 @@ class TodoListViewController: UITableViewController {
         
         searchBar.delegate = self
         
-        // If we have saved data in the past, get it now.
-        loadItems()
+        // If we have saved data in the past, it will be loaded as soon as we have a value for selectedCategory so there is no need to load it here
        
     }
 
@@ -118,6 +122,7 @@ class TodoListViewController: UITableViewController {
                 let newItem = Item(context: self.context)
                 newItem.title = textEntered
                 newItem.isCompleted = false
+                newItem.parentCategory = self.selectedCategory
                 
                 self.itemArray.append(newItem) // Add the item to the array of items
                 
